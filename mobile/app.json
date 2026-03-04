@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "BarberX",
+    "slug": "barberx",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "barberx",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1C1C1C"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.barberx.app"
+    },
+    "android": {
+      "package": "com.barberx.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#1C1C1C",
+        "foregroundImage": "./assets/android-icon-foreground.png"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": ["expo-router", "expo-font", "expo-asset", "expo-image"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
