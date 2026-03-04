@@ -33,16 +33,18 @@ function AuthGuard() {
     }
 
     if (profile?.status === "pending") {
-      router.replace("/(auth)/pending");
+      if (!inAuthGroup || segments[1] !== "pending") {
+        router.replace("/(auth)/pending");
+      }
       return;
     }
 
-    // Riidireziona all'app se l'utente è in area auth
-    // (approved esplicito, o profilo null/senza status specificato)
-    if (inAuthGroup) {
-      router.replace("/(app)/(home)");
+    if (profile?.status === "approved" || profile?.status === undefined) {
+      if (inAuthGroup) {
+        router.replace("/(app)/(home)");
+      }
     }
-  }, [session, profile, isLoading]);
+  }, [session, profile, isLoading, segments]);
 
   return null;
 }
