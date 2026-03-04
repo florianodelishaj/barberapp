@@ -1,0 +1,14 @@
+# IDE & editor
+.vscode/
+.idea/
+
+# Claude AI workspace
+.claude/
+
+# MCP config
+.mcp.json
+supabase/.mcp.json
+
+# OS
+.DS_Store
+Thumbs.db
