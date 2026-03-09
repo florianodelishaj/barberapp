@@ -30,7 +30,7 @@ export default function ForgotPasswordScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
         <View className="flex-1 px-6 pt-6 gap-8">
           <View className="gap-4">
             <BackButton />
@@ -44,6 +44,7 @@ export default function ForgotPasswordScreen() {
 
           <View className="gap-4">
             <Input
+              icon="mail-outline"
               placeholder="Email"
               value={email}
               onChangeText={setEmail}

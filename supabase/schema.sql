@@ -2,24 +2,55 @@
 -- BarberX — Supabase Schema
 -- =============================================
 
+-- Enum status utente
+CREATE TYPE user_status AS ENUM ('pending', 'approved', 'rejected');
+
 -- Profili utente (estende auth.users)
 CREATE TABLE profiles (
   id           UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  full_name    TEXT NOT NULL,
-  phone        TEXT,
-  birth_date   DATE,
+  first_name   TEXT NOT NULL CHECK (trim(first_name) <> ''),
+  last_name    TEXT NOT NULL CHECK (trim(last_name) <> ''),
+  email        TEXT,
+  phone        TEXT CHECK (phone IS NULL OR phone ~ '^\+?[\d\s\-\(\)\.]{7,20}$'),
+  birth_date   DATE CHECK (
+    birth_date IS NULL OR (
+      birth_date >= CURRENT_DATE - INTERVAL '100 years' AND
+      birth_date <= CURRENT_DATE
+    )
+  ),
+  status       user_status NOT NULL DEFAULT 'pending',
   avatar_url   TEXT,
-  status       TEXT NOT NULL DEFAULT 'pending'
-                 CHECK (status IN ('pending', 'approved', 'rejected')),
-  created_at   TIMESTAMPTZ DEFAULT now()
+  created_at   TIMESTAMPTZ DEFAULT now(),
+  updated_at   TIMESTAMPTZ DEFAULT now()
 );
+
+-- Trigger per updated_at automatico
+CREATE OR REPLACE FUNCTION update_updated_at()
+RETURNS trigger AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER set_updated_at
+  BEFORE UPDATE ON profiles
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- Trigger: crea profilo automaticamente dopo signup
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO profiles (id, full_name, status)
-  VALUES (new.id, COALESCE(new.raw_user_meta_data->>'full_name', ''), 'pending');
+  INSERT INTO profiles (id, first_name, last_name, email, phone, birth_date, status)
+  VALUES (
+    new.id,
+    COALESCE(new.raw_user_meta_data->>'first_name', ''),
+    COALESCE(new.raw_user_meta_data->>'last_name', ''),
+    new.email,
+    new.raw_user_meta_data->>'phone',
+    (new.raw_user_meta_data->>'birth_date')::DATE,
+    'pending'
+  );
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -84,6 +115,7 @@ CREATE TABLE appointments (
   status               TEXT NOT NULL DEFAULT 'confirmed'
                          CHECK (status IN ('confirmed', 'cancelled', 'completed')),
   cancelled_at         TIMESTAMPTZ,
+  cancelled_by         UUID REFERENCES profiles(id),
   cancellation_reason  TEXT,
   created_at           TIMESTAMPTZ DEFAULT now()
 );
@@ -102,6 +134,8 @@ ALTER TABLE appointments ENABLE ROW LEVEL SECURITY;
 -- profiles: utente vede/modifica solo il proprio
 CREATE POLICY "own profile read" ON profiles
   FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "own profile insert" ON profiles
+  FOR INSERT WITH CHECK (auth.uid() = id);
 CREATE POLICY "own profile update" ON profiles
   FOR UPDATE USING (auth.uid() = id);
 
@@ -128,6 +162,55 @@ CREATE POLICY "own appointments insert" ON appointments
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "own appointments update" ON appointments
   FOR UPDATE USING (auth.uid() = user_id);
+
+-- =============================================
+-- Push Notifications
+-- =============================================
+
+-- Token push per dispositivo
+CREATE TABLE push_tokens (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  token      TEXT NOT NULL,
+  platform   TEXT CHECK (platform IN ('ios', 'android')),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (user_id, token)
+);
+
+ALTER TABLE push_tokens ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "own tokens read" ON push_tokens
+  FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "own tokens insert" ON push_tokens
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "own tokens update" ON push_tokens
+  FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "own tokens delete" ON push_tokens
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- Log notifiche inviate
+CREATE TABLE notification_log (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id         UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  type            TEXT NOT NULL,
+  title           TEXT NOT NULL,
+  body            TEXT NOT NULL,
+  data            JSONB,
+  expo_ticket_id  TEXT,
+  status          TEXT NOT NULL DEFAULT 'sent' CHECK (status IN ('sent', 'delivered', 'failed')),
+  error           TEXT,
+  created_at      TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE notification_log ENABLE ROW LEVEL SECURITY;
+
+-- Config privata (solo SECURITY DEFINER)
+CREATE TABLE app_config (
+  key   TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
+ALTER TABLE app_config ENABLE ROW LEVEL SECURITY;
 
 -- =============================================
 -- Dati di esempio

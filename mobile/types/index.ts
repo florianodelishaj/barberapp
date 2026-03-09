@@ -3,12 +3,15 @@ export type AppointmentStatus = 'confirmed' | 'cancelled' | 'completed';
 
 export interface Profile {
   id: string;
-  full_name: string;
+  first_name: string;
+  last_name: string;
+  email: string | null;
   phone: string | null;
   birth_date: string | null;
-  avatar_url: string | null;
   status: UserStatus;
+  avatar_url: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 export interface Barber {
@@ -39,7 +42,9 @@ export interface Appointment {
   price: number;
   status: AppointmentStatus;
   cancelled_at: string | null;
+  cancelled_by: string | null;
   created_at: string;
+  note: string | null;
   barber?: Barber;
   service?: Service;
 }

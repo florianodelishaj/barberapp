@@ -12,3 +12,6 @@ supabase/.mcp.json
 # OS
 .DS_Store
 Thumbs.db
+
+# Database
+supabase/schema.sql

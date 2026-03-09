@@ -27,9 +27,28 @@
       "bundler": "metro",
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-router", "expo-font", "expo-asset", "expo-image"],
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-asset",
+      "expo-image",
+      "@react-native-community/datetimepicker",
+      [
+        "expo-notifications",
+        {
+          "color": "#FA3D3B"
+        }
+      ]
+    ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "f95bd6b0-44d2-4eeb-a7a4-bb6fc8f56e63"
+      }
+    },
+    "owner": "florianodelishaj"
   }
 }

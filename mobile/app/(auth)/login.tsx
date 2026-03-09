@@ -31,6 +31,7 @@ export default function LoginScreen() {
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
       >
         <View className="flex-1 px-6 pt-6 gap-8">
           {/* Header */}
@@ -50,6 +51,7 @@ export default function LoginScreen() {
           <View className="gap-4">
             <Input
               label={undefined}
+              icon="mail-outline"
               placeholder="Email"
               value={email}
               onChangeText={setEmail}
@@ -57,6 +59,7 @@ export default function LoginScreen() {
               autoCapitalize="none"
             />
             <Input
+              icon="lock-closed-outline"
               placeholder="Password"
               value={password}
               onChangeText={setPassword}
